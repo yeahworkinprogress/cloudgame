@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Game Kuis Awan</title>
+    <style>
+        body { text-align: center; font-family: sans-serif; background: #87CEEB; }
+        #game-container { position: relative; height: 500px; width: 400px; margin: auto; border: 2px solid white; background: white; overflow: hidden; }
+        .character { width: 40px; height: 40px; position: absolute; bottom: 10px; transition: all 0.5s; font-size: 30px; }
+        #playerA { left: 20px; }
+        #playerB { left: 120px; }
+        #playerC { left: 220px; }
+        #playerD { left: 320px; }
+        .quiz-box { margin-top: 20px; padding: 20px; background: white; display: inline-block; border-radius: 10px; }
+        button { padding: 10px 20px; cursor: pointer; }
+        /* Animasi Joget */
+        @keyframes dance {
+            0% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(20deg); }
+            100% { transform: translateY(0) rotate(0deg); }
+        }
+        .dancing { animation: dance 0.5s infinite; }
+    </style>
+</head>
+<body>
+
+    <h1>Kuis Panjat Awan ☁️</h1>
+    
+    <div id="game-container">
+        <div id="playerA" class="character">🐱</div>
+        <div id="playerB" class="character">🐶</div>
+        <div id="playerC" class="character">🦊</div>
+        <div id="playerD" class="character">🐸</div>
+    </div>
+
+    <div class="quiz-box">
+        <h2 id="question">Siap bermain?</h2>
+        <div id="options">
+            <button onclick="checkAnswer(true)">Klik untuk Mulai</button>
+        </div>
+    </div>
+
+    <script>
+        let currentPos = { A: 10, B: 10, C: 10, D: 10 };
+        
+        function moveUp(player) {
+            currentPos[player] += 80; // Naik 80 pixel
+            document.getElementById('player' + player).style.bottom = currentPos[player] + "px";
+            
+            // Cek jika sudah sampai puncak (misal 400px)
+            if(currentPos[player] >= 410) {
+                document.getElementById('player' + player).classList.add('dancing');
+                alert("Pemain " + player + " MENANG!");
+            }
+        }
+
+        // Fungsi sementara untuk tes
+        function checkAnswer(isCorrect) {
+            if(isCorrect) {
+                moveUp('A'); // Sementara kita gerakkan karakter A dulu
+                document.getElementById('question').innerText = "Hebat! Awan semakin dekat!";
+            }
+        }
+    </script>
+</body>
+</html>
