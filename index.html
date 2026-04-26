@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Cloud Race - Sound & Championship Fixed</title>
+    <title>Cloud Race - Sound & Championship Pro</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     
@@ -85,7 +85,6 @@
     </div>
 
     <script>
-        // Konfigurasi Firebase Anda tetap sama
         const firebaseConfig = {
             apiKey: "AIzaSyCIuO03IS3xOk-LrMP2DnzYHvguLT4-Rzc",
             authDomain: "cloudgame-30a5d.firebaseapp.com",
@@ -136,7 +135,7 @@
             const idx = pState[p];
             const lane = document.getElementById('lane-' + p);
             if (idx >= daftarSoal.length) { 
-                lane.innerHTML = "<h2>FINISH! 🏁</h2>"; 
+                lane.innerHTML = "<h2>MENUNGGU PEMAIN LAIN... ⏳</h2>"; 
                 return; 
             }
             const data = daftarSoal[idx];
@@ -148,7 +147,6 @@
         }
 
         function cek(p, pilih, benar) {
-            // Coba paksa musik jalan saat interaksi pertama
             const music = document.getElementById('bg-music');
             if (music.paused) music.play().catch(()=>{});
 
@@ -168,20 +166,28 @@
         }
 
         function resetGame() {
-            if(confirm("Reset semua posisi dan mulai dari awal?")) {
-                // Reset juga finishOrder di Firebase jika ingin sinkron antar layar
-                db.ref('/').update({
-                    pos: {A: 20, B: 20, C: 20, D: 20}
-                }).then(() => {
-                    location.reload();
-                });
+            if(confirm("Reset semua posisi dan mulai game baru?")) {
+                // Mereset nilai di database akan langsung men-trigger .on('value') di semua layar pengguna!
+                db.ref('pos').set({A: 20, B: 20, C: 20, D: 20});
             }
         }
 
-        // Monitoring Posisi & Finish
         db.ref('pos').on('value', (s) => {
             const d = s.val() || {A: 20, B: 20, C: 20, D: 20};
             const medals = ['🥇 Juara 1', '🥈 Juara 2', '🥉 Juara 3', '🏁 Juara 4'];
+
+            // Deteksi jika Admin melakukan Reset dari layar mana pun
+            if (d.A === 20 && d.B === 20 && d.C === 20 && d.D === 20) {
+                // Reset semua state lokal tanpa perlu refresh browser
+                if (finishOrder.length > 0 || pState.A > 0 || pState.B > 0 || pState.C > 0 || pState.D > 0) {
+                    finishOrder = [];
+                    pState = { A: 0, B: 0, C: 0, D: 0 };
+                    document.getElementById('finish-overlay').style.display = 'none';
+                    if (daftarSoal.length > 0) {
+                        ['A', 'B', 'C', 'D'].forEach(p => updateLane(p));
+                    }
+                }
+            }
 
             ['A', 'B', 'C', 'D'].forEach((p, i) => {
                 const pos = d[p] || 20;
@@ -194,36 +200,9 @@
                 cloud.style.left = (leftPos - 2) + "%";
                 cloud.style.bottom = (pos - 10) + "px";
 
-                // LOGIKA FINISH: Jika posisi melebihi 450px
+                // Pengecekan Finish
                 if (pos >= 450 && !finishOrder.find(x => x.id === p)) {
                     finishOrder.push({ id: p, name: names[p] });
                     
-                    // Mainkan suara menang
-                    document.getElementById('snd-win').currentTime = 0;
-                    document.getElementById('snd-win').play().catch(()=>{});
-
-                    // Update tampilan papan skor secara real-time
-                    showLeaderboard(medals);
-                }
-            });
-        });
-
-        function showLeaderboard(medals) {
-            const list = document.getElementById('rank-list');
-            list.innerHTML = finishOrder.map((pl, i) => `
-                <div class="rank-item rank-${i+1}">
-                    <span>${medals[i] || 'Peserta'}</span>
-                    <span>${pl.name}</span>
-                </div>
-            `).join('');
-            
-            // Tampilkan overlay jika minimal ada 1 yang finish
-            if (finishOrder.length > 0) {
-                document.getElementById('finish-overlay').style.display = 'flex';
-            }
-        }
-
-        initGame();
-    </script>
-</body>
-</html>
+                    // Tampilkan leaderboard & bunyi menang HANYA jika semua sudah finish (4 orang)
+                    if (finishOrder.length === 4)
