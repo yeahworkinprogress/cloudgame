@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Cloud Race - Sound & Championship Pro</title>
+    <title>Cloud Race - Anti Blank & Championship Pro</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     
@@ -18,6 +18,12 @@
 
         .cloud-platform { position: absolute; width: 120px; height: 30px; background: white; border-radius: 50px; opacity: 0.8; z-index: 5; }
         .character { width: 80px; height: 80px; position: absolute; bottom: 20px; transition: all 0.5s ease-out; font-size: 60px; z-index: 10; text-align: center; }
+
+        /* POSISI DEFAULT: Mencegah burung numpuk di kiri kalau koneksi telat/error */
+        #cloudA { left: 8%; } #charA { left: 10%; }
+        #cloudB { left: 33%; } #charB { left: 35%; }
+        #cloudC { left: 58%; } #charC { left: 60%; }
+        #cloudD { left: 83%; } #charD { left: 85%; }
 
         #control-panel { display: flex; height: 50vh; width: 100%; background: #f4f4f4; }
         .player-lane { flex: 1; border-right: 2px solid #ccc; padding: 10px; display: flex; flex-direction: column; justify-content: flex-start; }
@@ -119,30 +125,58 @@
         async function initGame() {
             try {
                 const res = await fetch('soal.csv');
+                if (!res.ok) throw new Error("Gagal mengambil file soal.csv");
                 const teks = await res.text();
+                
+                // Pisahkan baris dan buang yang benar-benar kosong
                 const baris = teks.split('\n').filter(b => b.trim() !== "");
+                
+                // Fungsi aman untuk memotong spasi (mencegah error jika kolom kosong)
+                const t = (str) => (str || "").trim();
+
                 daftarSoal = baris.map(b => {
                     const k = b.split(',');
-                    return { q: k[0].trim(), o: [k[1].trim(), k[2].trim(), k[3].trim()], a: k[4].trim() };
+                    // Diambil aman k[0] sampai k[4] untuk menghindari "undefined error"
+                    return { 
+                        q: t(k[0]), 
+                        o: [t(k[1]), t(k[2]), t(k[3])], 
+                        a: t(k[4]) 
+                    };
                 });
+                
                 ['A', 'B', 'C', 'D'].forEach(p => updateLane(p));
             } catch (err) {
-                console.error("Gagal memuat soal.csv", err);
+                console.error("Terjadi masalah muat soal:", err);
+                ['A', 'B', 'C', 'D'].forEach(p => {
+                    const lane = document.getElementById('lane-' + p);
+                    if (lane) lane.innerHTML = `<br><h3 style="color:red">⚠️ Error membaca soal.csv.<br>Cek pengetikan koma di file CSV-nya!</h3>`;
+                });
             }
         }
 
         function updateLane(p) {
             const idx = pState[p];
             const lane = document.getElementById('lane-' + p);
+            
+            if (daftarSoal.length === 0) return; // Jika gagal loading, hentikan
+
             if (idx >= daftarSoal.length) { 
                 lane.innerHTML = "<h2>MENUNGGU PEMAIN LAIN... ⏳</h2>"; 
                 return; 
             }
+            
             const data = daftarSoal[idx];
+            
+            // Format teks aman mencegah error tombol patah gara-gara tanda kutip (')
+            const safeAns = data.a.replace(/'/g, "\\'");
+            
             lane.innerHTML = `
                 <div style="font-weight:bold; color:#d63031">PLAYER ${p}</div>
                 <div class="question-box"><div class="question-text">${data.q}</div></div>
-                ${data.o.map(opt => `<button class="opt" onclick="cek('${p}', '${opt.replace(/'/g, "\\'")}', '${data.a.replace(/'/g, "\\")}')">${opt}</button>`).join('')}
+                ${data.o.map(opt => {
+                    const safeOpt = opt.replace(/'/g, "\\'");
+                    return `<button class="opt" onclick="cek('${p}', '${safeOpt}', '${safeAns}')">${opt}</button>`;
+                }).join('')}
             `;
         }
 
@@ -150,7 +184,7 @@
             const music = document.getElementById('bg-music');
             if (music.paused) music.play().catch(()=>{});
 
-            if (pilih.toLowerCase().trim() === benar.toLowerCase().trim()) {
+            if (pilih.toLowerCase() === benar.toLowerCase()) {
                 const snd = document.getElementById('snd-correct');
                 snd.currentTime = 0;
                 snd.play().catch(()=>{});
@@ -167,18 +201,19 @@
 
         function resetGame() {
             if(confirm("Reset semua posisi dan mulai game baru?")) {
-                // Mereset nilai di database akan langsung men-trigger .on('value') di semua layar pengguna!
                 db.ref('pos').set({A: 20, B: 20, C: 20, D: 20});
             }
         }
 
+        // Listener Firebase (Pakai perlindungan data kosong)
         db.ref('pos').on('value', (s) => {
-            const d = s.val() || {A: 20, B: 20, C: 20, D: 20};
+            const val = s.val();
+            // Cegah error jika database sempat kosong/terhapus
+            const d = (val && typeof val === 'object') ? val : {A: 20, B: 20, C: 20, D: 20};
             const medals = ['🥇 Juara 1', '🥈 Juara 2', '🥉 Juara 3', '🏁 Juara 4'];
 
-            // Deteksi jika Admin melakukan Reset dari layar mana pun
+            // Pengecekan Admin Reset
             if (d.A === 20 && d.B === 20 && d.C === 20 && d.D === 20) {
-                // Reset semua state lokal tanpa perlu refresh browser
                 if (finishOrder.length > 0 || pState.A > 0 || pState.B > 0 || pState.C > 0 || pState.D > 0) {
                     finishOrder = [];
                     pState = { A: 0, B: 0, C: 0, D: 0 };
@@ -189,20 +224,47 @@
                 }
             }
 
+            // Atur Visual Posisi
             ['A', 'B', 'C', 'D'].forEach((p, i) => {
                 const pos = d[p] || 20;
                 const char = document.getElementById('char' + p);
                 const cloud = document.getElementById('cloud' + p);
                 const leftPos = (10 + (i * 25)); 
                 
-                char.style.left = leftPos + "%";
-                char.style.bottom = pos + "px";
-                cloud.style.left = (leftPos - 2) + "%";
-                cloud.style.bottom = (pos - 10) + "px";
+                if (char && cloud) {
+                    char.style.left = leftPos + "%";
+                    char.style.bottom = pos + "px";
+                    cloud.style.left = (leftPos - 2) + "%";
+                    cloud.style.bottom = (pos - 10) + "px";
+                }
 
                 // Pengecekan Finish
                 if (pos >= 450 && !finishOrder.find(x => x.id === p)) {
                     finishOrder.push({ id: p, name: names[p] });
                     
-                    // Tampilkan leaderboard & bunyi menang HANYA jika semua sudah finish (4 orang)
-                    if (finishOrder.length === 4)
+                    if (finishOrder.length === 4) {
+                        document.getElementById('snd-win').currentTime = 0;
+                        document.getElementById('snd-win').play().catch(()=>{});
+                        showLeaderboard(medals);
+                    }
+                }
+            });
+        });
+
+        function showLeaderboard(medals) {
+            const list = document.getElementById('rank-list');
+            list.innerHTML = finishOrder.map((pl, i) => `
+                <div class="rank-item rank-${i+1}">
+                    <span>${medals[i] || 'Peserta'}</span>
+                    <span>${pl.name}</span>
+                </div>
+            `).join('');
+            
+            document.getElementById('finish-overlay').style.display = 'flex';
+        }
+
+        // Mulai Game
+        initGame();
+    </script>
+</body>
+</html>
