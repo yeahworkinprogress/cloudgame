@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Cloud Race - Sound & Championship</title>
+    <title>Cloud Race - Sound & Championship Fixed</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     
@@ -30,10 +30,10 @@
         
         button.opt { width: 100%; margin: 5px 0; padding: 15px; font-size: 1.1rem; font-weight: bold; border-radius: 10px; border: 3px solid #bbb; cursor: pointer; background: white; box-shadow: 0 4px 0 #999; }
 
-        #finish-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); color: white; z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; }
-        .score-card { background: white; color: #333; padding: 40px; border-radius: 30px; width: 400px; box-shadow: 0 15px 50px rgba(0,0,0,0.5); }
-        .rank-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; margin: 10px 0; border-radius: 15px; font-size: 24px; font-weight: bold; }
-        .rank-1 { background: #ffd700; color: #000; }
+        #finish-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); color: white; z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; }
+        .score-card { background: white; color: #333; padding: 40px; border-radius: 30px; width: 450px; box-shadow: 0 15px 50px rgba(0,0,0,0.5); }
+        .rank-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; margin: 10px 0; border-radius: 15px; font-size: 20px; font-weight: bold; }
+        .rank-1 { background: #ffd700; color: #000; border: 2px solid #b8860b; }
         .rank-2 { background: #c0c0c0; color: #000; }
         .rank-3 { background: #cd7f32; color: #fff; }
         .rank-4 { background: #f1f2f6; color: #333; }
@@ -41,25 +41,32 @@
         .bubble-reset { margin-top: 30px; padding: 20px 40px; font-size: 1.5rem; font-weight: bold; color: white; background: #2ed573; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 10px 20px rgba(46, 213, 115, 0.4); animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         
-        /* Tombol Musik */
         #music-toggle { position: fixed; top: 10px; left: 10px; z-index: 1001; background: white; border: none; padding: 10px; border-radius: 50%; cursor: pointer; font-size: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
 
-    <button id="music-toggle" onclick="toggleMusic()">🔊</button>
+    <button id="music-toggle" onclick="toggleMusic()">🔇 Klik Aktifkan Musik</button>
     <button class="admin-reset-btn" onclick="resetGame()">RESET ADMIN</button>
 
-    <audio id="bg-music" loop src="https://assets.mixkit.co/music/preview/mixkit-funny-game-loop-508.mp3"></audio>
-    <audio id="snd-correct" src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3"></audio>
-    <audio id="snd-wrong" src="https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3"></audio>
-    <audio id="snd-win" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3"></audio>
+    <audio id="bg-music" loop preload="auto">
+        <source src="https://assets.mixkit.co/music/preview/mixkit-funny-game-loop-508.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="snd-correct" preload="auto">
+        <source src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="snd-wrong" preload="auto">
+        <source src="https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="snd-win" preload="auto">
+        <source src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3" type="audio/mpeg">
+    </audio>
 
     <div id="finish-overlay">
         <div class="score-card">
-            <h1 style="margin-top:0; font-size: 2.5rem;">🏆 HASIL SKOR 🏆</h1>
+            <h1 style="margin-top:0; font-size: 2rem;">🏆 PAPAN PERINGKAT 🏆</h1>
             <div id="rank-list"></div>
-            <button class="bubble-reset" onclick="resetGame()">RESET POSISI & MAIN LAGI 🏁</button>
+            <button class="bubble-reset" onclick="resetGame()">MAIN LAGI 🏁</button>
         </div>
     </div>
 
@@ -78,6 +85,7 @@
     </div>
 
     <script>
+        // Konfigurasi Firebase Anda tetap sama
         const firebaseConfig = {
             apiKey: "AIzaSyCIuO03IS3xOk-LrMP2DnzYHvguLT4-Rzc",
             authDomain: "cloudgame-30a5d.firebaseapp.com",
@@ -94,70 +102,85 @@
         let daftarSoal = [];
         let pState = { A: 0, B: 0, C: 0, D: 0 };
         let finishOrder = [];
+        const names = {A: 'Burung Unta 🦩', B: 'Elang 🦅', C: 'Merak 🦚', D: 'Penguin 🐧'};
 
         function toggleMusic() {
             const music = document.getElementById('bg-music');
             const btn = document.getElementById('music-toggle');
             if (music.paused) {
-                music.play();
-                btn.innerText = "🔊";
+                music.play().then(() => {
+                    btn.innerText = "🔊 Musik Nyala";
+                }).catch(e => console.log("Gagal putar musik:", e));
             } else {
                 music.pause();
-                btn.innerText = "🔈";
+                btn.innerText = "🔇 Musik Mati";
             }
         }
 
         async function initGame() {
-            const res = await fetch('soal.csv');
-            const teks = await res.text();
-            const baris = teks.split('\n').filter(b => b.trim() !== "");
-            daftarSoal = baris.map(b => {
-                const k = b.split(',');
-                return { q: k[0].trim(), o: [k[1].trim(), k[2].trim(), k[3].trim()], a: k[4].trim() };
-            });
-            ['A', 'B', 'C', 'D'].forEach(p => updateLane(p));
+            try {
+                const res = await fetch('soal.csv');
+                const teks = await res.text();
+                const baris = teks.split('\n').filter(b => b.trim() !== "");
+                daftarSoal = baris.map(b => {
+                    const k = b.split(',');
+                    return { q: k[0].trim(), o: [k[1].trim(), k[2].trim(), k[3].trim()], a: k[4].trim() };
+                });
+                ['A', 'B', 'C', 'D'].forEach(p => updateLane(p));
+            } catch (err) {
+                console.error("Gagal memuat soal.csv", err);
+            }
         }
 
         function updateLane(p) {
             const idx = pState[p];
             const lane = document.getElementById('lane-' + p);
-            if (idx >= daftarSoal.length) { lane.innerHTML = "<h2>FINISH! 🏁</h2>"; return; }
+            if (idx >= daftarSoal.length) { 
+                lane.innerHTML = "<h2>FINISH! 🏁</h2>"; 
+                return; 
+            }
             const data = daftarSoal[idx];
             lane.innerHTML = `
-                <div style="font-weight:bold; color:red">PEMAIN ${p}</div>
+                <div style="font-weight:bold; color:#d63031">PLAYER ${p}</div>
                 <div class="question-box"><div class="question-text">${data.q}</div></div>
                 ${data.o.map(opt => `<button class="opt" onclick="cek('${p}', '${opt.replace(/'/g, "\\'")}', '${data.a.replace(/'/g, "\\")}')">${opt}</button>`).join('')}
             `;
         }
 
         function cek(p, pilih, benar) {
-            // Mulai musik saat klik pertama jika belum jalan (kebijakan browser)
-            document.getElementById('bg-music').play().catch(()=>{});
+            // Coba paksa musik jalan saat interaksi pertama
+            const music = document.getElementById('bg-music');
+            if (music.paused) music.play().catch(()=>{});
 
             if (pilih.toLowerCase().trim() === benar.toLowerCase().trim()) {
-                document.getElementById('snd-correct').currentTime = 0;
-                document.getElementById('snd-correct').play();
+                const snd = document.getElementById('snd-correct');
+                snd.currentTime = 0;
+                snd.play().catch(()=>{});
+                
                 db.ref('pos/' + p).transaction(pos => (pos || 20) + 50);
                 pState[p]++;
                 updateLane(p);
             } else {
-                document.getElementById('snd-wrong').currentTime = 0;
-                document.getElementById('snd-wrong').play();
-                // Opsional: Getaran atau efek visual salah
+                const snd = document.getElementById('snd-wrong');
+                snd.currentTime = 0;
+                snd.play().catch(()=>{});
             }
         }
 
         function resetGame() {
-            if(confirm("Reset semua posisi burung ke titik 0?")) {
-                db.ref('pos').set({A: 20, B: 20, C: 20, D: 20}).then(() => {
+            if(confirm("Reset semua posisi dan mulai dari awal?")) {
+                // Reset juga finishOrder di Firebase jika ingin sinkron antar layar
+                db.ref('/').update({
+                    pos: {A: 20, B: 20, C: 20, D: 20}
+                }).then(() => {
                     location.reload();
                 });
             }
         }
 
+        // Monitoring Posisi & Finish
         db.ref('pos').on('value', (s) => {
             const d = s.val() || {A: 20, B: 20, C: 20, D: 20};
-            const names = {A: 'Burung Unta 🦩', B: 'Elang 🦅', C: 'Merak 🦚', D: 'Penguin 🐧'};
             const medals = ['🥇 Juara 1', '🥈 Juara 2', '🥉 Juara 3', '🏁 Juara 4'];
 
             ['A', 'B', 'C', 'D'].forEach((p, i) => {
@@ -171,10 +194,16 @@
                 cloud.style.left = (leftPos - 2) + "%";
                 cloud.style.bottom = (pos - 10) + "px";
 
+                // LOGIKA FINISH: Jika posisi melebihi 450px
                 if (pos >= 450 && !finishOrder.find(x => x.id === p)) {
                     finishOrder.push({ id: p, name: names[p] });
-                    document.getElementById('snd-win').play();
-                    if (finishOrder.length === 4) showLeaderboard(medals);
+                    
+                    // Mainkan suara menang
+                    document.getElementById('snd-win').currentTime = 0;
+                    document.getElementById('snd-win').play().catch(()=>{});
+
+                    // Update tampilan papan skor secara real-time
+                    showLeaderboard(medals);
                 }
             });
         });
@@ -183,11 +212,15 @@
             const list = document.getElementById('rank-list');
             list.innerHTML = finishOrder.map((pl, i) => `
                 <div class="rank-item rank-${i+1}">
-                    <span>${medals[i]}</span>
+                    <span>${medals[i] || 'Peserta'}</span>
                     <span>${pl.name}</span>
                 </div>
             `).join('');
-            document.getElementById('finish-overlay').style.display = 'flex';
+            
+            // Tampilkan overlay jika minimal ada 1 yang finish
+            if (finishOrder.length > 0) {
+                document.getElementById('finish-overlay').style.display = 'flex';
+            }
         }
 
         initGame();
