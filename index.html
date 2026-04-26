@@ -1,132 +1,77 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Lomba Panjat Awan Edukasi</title>
+    <title>Cloud Race - Touchscreen Arena</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     
     <style>
         body { 
-            text-align: center; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            text-align: center; font-family: sans-serif; 
             background: linear-gradient(to bottom, #1e90ff, #87CEEB); 
-            margin: 0; padding: 20px; color: white;
-            min-height: 100vh;
+            margin: 0; overflow: hidden; height: 100vh;
         }
         
+        /* Area Balapan (Atas) */
         #game-container { 
-            position: relative; 
-            height: 600px; 
-            width: 100%; 
-            max-width: 500px; 
-            margin: auto; 
-            border: 5px solid rgba(255,255,255,0.5); 
-            background: rgba(255,255,255,0.1); 
-            border-radius: 20px; 
-            overflow: hidden;
-            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            position: relative; height: 55vh; width: 100%; 
+            background: rgba(255,255,255,0.1); border-bottom: 5px solid white;
         }
 
-        /* Visual Awan sebagai Pijakan */
         .cloud-platform {
-            position: absolute;
-            width: 80px;
-            height: 20px;
-            background: white;
-            border-radius: 50px;
-            opacity: 0.8;
-            box-shadow: 0 5px 15px rgba(255,255,255,0.5);
+            position: absolute; width: 100px; height: 25px;
+            background: white; border-radius: 50px; opacity: 0.7;
         }
 
         .character { 
-            width: 50px; 
-            height: 50px; 
-            position: absolute; 
-            bottom: 10px; 
-            transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-            font-size: 40px; 
-            z-index: 10;
+            width: 80px; height: 80px; position: absolute; bottom: 20px; 
+            transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            font-size: 60px; z-index: 10;
         }
 
-        /* Posisi Horizontal Pemain */
-        #charA { left: 10%; } #charB { left: 35%; } #charC { left: 60%; } #charD { left: 85%; }
-
-        .quiz-box { 
-            margin-top: 20px; 
-            padding: 20px; 
-            background: white; 
-            border-radius: 15px; 
-            display: inline-block; 
-            width: 90%; 
-            max-width: 500px;
-            color: #333;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        /* Area Tombol (Bawah - Dibagi 4) */
+        #control-panel { 
+            display: flex; height: 45vh; width: 100%; background: #f0f0f0; 
         }
 
+        .player-lane { 
+            flex: 1; border-right: 2px solid #ccc; padding: 10px;
+            display: flex; flex-direction: column; justify-content: center;
+        }
+
+        .lane-A { background: #ffebee; } .lane-B { background: #e3f2fd; }
+        .lane-C { background: #f1f8e9; } .lane-D { background: #fffde7; }
+
+        .question-text { font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; height: 60px; color: #333; }
+        
         button.opt { 
-            display: block; 
-            width: 100%; 
-            margin: 10px 0; 
-            padding: 15px; 
-            cursor: pointer; 
-            border-radius: 10px; 
-            border: 2px solid #eee; 
-            font-size: 16px; 
-            font-weight: bold;
-            background: #f9f9f9;
-            transition: 0.3s;
-        }
-
-        button.opt:hover { background: #e0f0ff; border-color: #1e90ff; transform: translateY(-2px); }
-
-        #pilih-peran { 
-            background: rgba(255, 215, 0, 0.9); 
-            padding: 15px; 
-            border-radius: 10px; 
-            margin-bottom: 15px;
-            color: #333;
-        }
-
-        .win-dance { animation: dance 0.5s infinite; }
-        @keyframes dance {
-            0% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(15deg); }
-            100% { transform: translateY(0) rotate(0deg); }
+            width: 100%; margin: 5px 0; padding: 15px 5px; 
+            font-size: 1.1rem; font-weight: bold; border-radius: 10px;
+            border: 3px solid #ddd; cursor: pointer;
         }
     </style>
 </head>
 <body>
 
-    <h1>☁️ CLOUD RACE EDUKASI ☁️</h1>
-
-    <div id="pilih-peran">
-        <strong>PILIH KARAKTERMU:</strong><br><br>
-        <button onclick="pilih('A')">🐱 A</button>
-        <button onclick="pilih('B')">🐶 B</button>
-        <button onclick="pilih('C')">🦊 C</button>
-        <button onclick="pilih('D')">🐸 D</button>
-    </div>
-
     <div id="game-container">
-        <div class="cloud-platform" style="bottom: 100px; left: 5%;"></div>
-        <div class="cloud-platform" style="bottom: 200px; left: 40%;"></div>
-        <div class="cloud-platform" style="bottom: 300px; left: 70%;"></div>
-        <div class="cloud-platform" style="bottom: 400px; left: 20%;"></div>
-        <div class="cloud-platform" style="bottom: 500px; left: 55%;"></div>
+        <div class="cloud-platform" style="bottom: 150px; left: 10%;"></div>
+        <div class="cloud-platform" style="bottom: 300px; left: 45%;"></div>
+        <div class="cloud-platform" style="bottom: 450px; left: 75%;"></div>
 
-        <div id="charA" class="character">🐱</div>
-        <div id="charB" class="character">🐶</div>
-        <div id="charC" class="character">🦊</div>
-        <div id="charD" class="character">🐸</div>
+        <div id="charA" class="character" style="left: 10%;">🦩</div>
+        <div id="charB" class="character" style="left: 35%;">🦅</div>
+        <div id="charC" class="character" style="left: 60%;">🦚</div>
+        <div id="charD" class="character" style="left: 85%;">🐧</div>
     </div>
 
-    <div class="quiz-box">
-        <h2 id="question">Memuat Soal dari Spreadsheet...</h2>
-        <div id="options"></div>
+    <div id="control-panel">
+        <div id="lane-A" class="player-lane lane-A"></div>
+        <div id="lane-B" class="player-lane lane-B"></div>
+        <div id="lane-C" class="player-lane lane-C"></div>
+        <div id="lane-D" class="player-lane lane-D"></div>
     </div>
 
     <script>
-        // DATA FIREBASE KAMU
         const firebaseConfig = {
             apiKey: "AIzaSyCIuO03IS3xOk-LrMP2DnzYHvguLT4-Rzc",
             authDomain: "cloudgame-30a5d.firebaseapp.com",
@@ -140,91 +85,66 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         
-        let role = '';
-        let currentSoalIdx = 0;
         let daftarSoal = [];
+        let pState = { A: 0, B: 0, C: 0, D: 0 }; // Indeks soal tiap pemain
 
-        function pilih(r) {
-            role = r;
-            document.getElementById('pilih-peran').innerHTML = "<h3>Anda adalah Pemain " + r + "</h3>";
-        }
-
-        async function ambilSoal() {
-            try {
-                const res = await fetch('soal.csv');
-                const teks = await res.text();
-                const baris = teks.split('\n').filter(b => b.trim() !== "");
-                
-                daftarSoal = baris.map(b => {
-                    const k = b.split(',');
-                    return { q: k[0], o: [k[1], k[2], k[3]], a: k[4]?.trim() };
-                });
-                tampilSoal();
-            } catch (e) {
-                document.getElementById('question').innerText = "Gagal memuat soal. Pastikan soal.csv sudah diupload!";
-            }
-        }
-
-        function tampilSoal() {
-            if (daftarSoal.length === 0) return;
-            let data = daftarSoal[currentSoalIdx];
-            document.getElementById('question').innerText = data.q;
-            let optDiv = document.getElementById('options');
-            optDiv.innerHTML = '';
-            
-            data.o.forEach(pilihan => {
-                let btn = document.createElement('button');
-                btn.className = 'opt';
-                btn.innerText = pilihan;
-                btn.onclick = () => {
-                    if(pilihan.trim() === data.a) {
-                        naikKeAwan();
-                    } else {
-                        alert("Salah! Coba lagi.");
-                    }
-                    // Acak soal berikutnya
-                    currentSoalIdx = Math.floor(Math.random() * daftarSoal.length);
-                    tampilSoal();
-                };
-                optDiv.appendChild(btn);
+        async function initGame() {
+            const res = await fetch('soal.csv');
+            const teks = await res.text();
+            const baris = teks.split('\n').filter(b => b.trim() !== "");
+            daftarSoal = baris.map(b => {
+                const k = b.split(',');
+                return { q: k[0], o: [k[1], k[2], k[3]], a: k[4]?.trim() };
             });
+            
+            ['A', 'B', 'C', 'D'].forEach(p => updateLane(p));
         }
 
-        function naikKeAwan() {
-            if(!role) {
-                alert("Pilih karaktermu dulu di atas!");
+        function updateLane(p) {
+            const idx = pState[p];
+            const lane = document.getElementById('lane-' + p);
+            if (idx >= daftarSoal.length) {
+                lane.innerHTML = "<h3>FINISH! 🏁</h3>";
                 return;
             }
-            // Update posisi ke Firebase (tambah 50px setiap benar)
-            db.ref('pos/' + role).transaction(p => (p || 10) + 50);
+
+            const data = daftarSoal[idx];
+            lane.innerHTML = `
+                <div style="font-size:14px; color:red; font-weight:bold">PEMAIN ${p}</div>
+                <div class="question-text">${data.q}</div>
+                ${data.o.map(opt => `<button class="opt" onclick="cek('${p}', '${opt.replace(/'/g, "\\'")}', '${data.a.replace(/'/g, "\\'")}')">${opt}</button>`).join('')}
+            `;
         }
 
-        // Pantau gerakan pemain lain secara LIVE
+        function cek(p, pilih, benar) {
+            if (pilih.trim() === benar) {
+                db.ref('pos/' + p).transaction(pos => (pos || 20) + 45);
+                pState[p]++;
+                updateLane(p);
+            } else {
+                alert("Pemain " + p + " Salah!");
+            }
+        }
+
         db.ref('pos').on('value', (s) => {
-            const d = s.val();
-            if(d) {
-                const players = ['A', 'B', 'C', 'D'];
-                players.forEach(p => {
-                    let element = document.getElementById('char' + p);
-                    let position = d[p] || 10;
-                    element.style.bottom = position + "px";
-                    
-                    // Cek jika ada yang menang (sampai atas 500px)
-                    if(position >= 510) {
-                        element.classList.add('win-dance');
-                        document.getElementById('question').innerText = "PEMAIN " + p + " MENANG! 🎉";
-                        document.getElementById('options').innerHTML = "<button onclick='resetGame()'>Main Lagi</button>";
-                    }
-                });
+            const d = s.val() || {};
+            ['A', 'B', 'C', 'D'].forEach(p => {
+                document.getElementById('char' + p).style.bottom = (d[p] || 20) + "px";
+                if(d[p] >= 500) {
+                    document.getElementById('char' + p).style.filter = "drop-shadow(0 0 10px gold)";
+                }
+            });
+        });
+
+        // Tombol reset admin (tekan R di keyboard untuk reset semua)
+        window.addEventListener('keydown', (e) => {
+            if(e.key === 'r' || e.key === 'R') {
+                db.ref('pos').set({A:20, B:20, C:20, D:20});
+                location.reload();
             }
         });
 
-        function resetGame() {
-            db.ref('pos').set({A:10, B:10, C:10, D:10});
-            location.reload();
-        }
-
-        ambilSoal();
+        initGame();
     </script>
 </body>
 </html>
