@@ -26,15 +26,16 @@
         #cloudD { left: 83%; } #charD { left: 85%; }
 
         #control-panel { display: flex; height: 50vh; width: 100%; background: #f4f4f4; }
-        .player-lane { flex: 1; border-right: 2px solid #ccc; padding: 10px; display: flex; flex-direction: column; justify-content: flex-start; }
+        .player-lane { flex: 1; border-right: 2px solid #ccc; padding: 10px; display: flex; flex-direction: column; justify-content: flex-start; overflow-y: auto; }
         
         .lane-A { background: #ffebee; } .lane-B { background: #e3f2fd; }
         .lane-C { background: #f1f8e9; } .lane-D { background: #fffde7; }
 
-        .question-box { min-height: 100px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; padding: 10px; background: white; border-radius: 12px; box-shadow: 0 4px 0 #ddd; }
-        .question-text { font-size: 1.3rem; font-weight: bold; color: #000; }
+        .question-box { min-height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; padding: 10px; background: white; border-radius: 12px; box-shadow: 0 4px 0 #ddd; }
+        .question-text { font-size: 1.2rem; font-weight: bold; color: #000; }
         
-        button.opt { width: 100%; margin: 5px 0; padding: 15px; font-size: 1.1rem; font-weight: bold; border-radius: 10px; border: 3px solid #bbb; cursor: pointer; background: white; box-shadow: 0 4px 0 #999; }
+        button.opt { width: 100%; margin: 4px 0; padding: 12px; font-size: 1rem; font-weight: bold; border-radius: 10px; border: 3px solid #bbb; cursor: pointer; background: white; box-shadow: 0 4px 0 #999; }
+        button.opt:active { transform: translateY(4px); box-shadow: none; margin-bottom: 8px; }
 
         #finish-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); color: white; z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; }
         .score-card { background: white; color: #333; padding: 40px; border-radius: 30px; width: 450px; box-shadow: 0 15px 50px rgba(0,0,0,0.5); }
@@ -136,11 +137,11 @@
 
                 daftarSoal = baris.map(b => {
                     const k = b.split(',');
-                    // Diambil aman k[0] sampai k[4] untuk menghindari "undefined error"
+                    // Diambil aman k[0] sampai k[5] untuk membaca 6 Kolom (A sampai F)
                     return { 
-                        q: t(k[0]), 
-                        o: [t(k[1]), t(k[2]), t(k[3])], 
-                        a: t(k[4]) 
+                        q: t(k[0]), // Kolom A: Pertanyaan
+                        o: [t(k[1]), t(k[2]), t(k[3]), t(k[4])], // Kolom B, C, D, E: Opsi Pilihan Ganda
+                        a: t(k[5])  // Kolom F: Kunci Jawaban
                     };
                 });
                 
@@ -149,7 +150,7 @@
                 console.error("Terjadi masalah muat soal:", err);
                 ['A', 'B', 'C', 'D'].forEach(p => {
                     const lane = document.getElementById('lane-' + p);
-                    if (lane) lane.innerHTML = `<br><h3 style="color:red">⚠️ Error membaca soal.csv.<br>Cek pengetikan koma di file CSV-nya!</h3>`;
+                    if (lane) lane.innerHTML = `<br><h3 style="color:red">⚠️ Error membaca soal.csv.<br>Pastikan formatnya A=Soal, B-E=Opsi, F=Kunci!</h3>`;
                 });
             }
         }
@@ -161,7 +162,7 @@
             if (daftarSoal.length === 0) return; // Jika gagal loading, hentikan
 
             if (idx >= daftarSoal.length) { 
-                lane.innerHTML = "<h2>FINISH! MENUNGGU PEMAIN LAIN... ⏳</h2>"; 
+                lane.innerHTML = "<h2 style='text-align:center;'>FINISH! MENUNGGU PEMAIN LAIN... ⏳</h2>"; 
                 return; 
             }
             
@@ -171,7 +172,7 @@
             const safeAns = data.a.replace(/'/g, "\\'");
             
             lane.innerHTML = `
-                <div style="font-weight:bold; color:#d63031">PLAYER ${p}</div>
+                <div style="font-weight:bold; color:#d63031; text-align:center;">PLAYER ${p}</div>
                 <div class="question-box"><div class="question-text">${data.q}</div></div>
                 ${data.o.map(opt => {
                     const safeOpt = opt.replace(/'/g, "\\'");
